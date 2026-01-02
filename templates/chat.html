@@ -1,62 +1,131 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh">
 <head>
 <meta charset="UTF-8">
 <title>我们的小世界</title>
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
 <style>
-body { background:#f5f5f5; font-family:sans-serif; }
-.msg { padding:8px 12px; margin:6px; border-radius:10px; max-width:65%; }
-.你 { background:#d1f5d3; margin-left:auto; }
-.她 { background:#f5d1e8; }
-.time { font-size:12px; color:#666; }
-img { max-width:200px; border-radius:6px; }
+body {
+  margin: 0;
+  background: #ededed;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+}
+
+.header {
+  background: #07c160;
+  color: white;
+  padding: 12px;
+  text-align: center;
+  font-size: 18px;
+}
+
+.chat {
+  padding: 10px;
+  padding-bottom: 90px;
+}
+
+.bubble {
+  max-width: 70%;
+  padding: 10px 14px;
+  margin: 10px 0;
+  border-radius: 16px;
+  position: relative;
+  word-wrap: break-word;
+}
+
+.me {
+  background: #9eea6a;
+  margin-left: auto;
+}
+
+.her {
+  background: white;
+  margin-right: auto;
+}
+
+.time {
+  font-size: 12px;
+  color: #888;
+  margin-top: 4px;
+}
+
+img {
+  max-width: 220px;
+  border-radius: 10px;
+}
+
+.input-box {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: #f7f7f7;
+  padding: 10px;
+  display: flex;
+  gap: 6px;
+  box-shadow: 0 -1px 5px rgba(0,0,0,0.1);
+}
+
+input[type="text"] {
+  flex: 1;
+  padding: 10px;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+}
+
+button {
+  background: #07c160;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 10px 14px;
+}
 </style>
 </head>
 
 <body>
-<h3 style="text-align:center;">💬 我们的小聊天</h3>
 
-<div id="chat">
+<div class="header">💚 我们的小聊天</div>
+
+<div class="chat" id="chat">
 {% for m in messages %}
-  <div class="msg {{ m.sender }}">
-    <b>{{ m.sender }}</b> <span class="time">{{ m.time }}</span><br>
+  <div class="bubble {{ 'me' if m.sender == user else 'her' }}">
     {% if m.type == "text" %}
       {{ m.content }}
     {% else %}
       <img src="/{{ m.content }}">
     {% endif %}
+    <div class="time">{{ m.time }}</div>
   </div>
 {% endfor %}
 </div>
 
-<hr>
-
-<input id="text" placeholder="说点什么">
-<input type="file" id="image">
-<button onclick="sendText()">发送</button>
+<div class="input-box">
+  <input id="text" placeholder="说点什么…">
+  <input type="file" id="image" hidden>
+  <button onclick="document.getElementById('image').click()">📷</button>
+  <button onclick="sendText()">发送</button>
+</div>
 
 <script>
 const socket = io();
 const user = "{{ user }}";
 
-function sendText(){
+function sendText() {
   const text = document.getElementById("text").value;
-  if(text){
+  if (text.trim()) {
     socket.emit("send_message", {
       sender: user,
-      type: "text",
       content: text
     });
     document.getElementById("text").value = "";
   }
 }
 
-document.getElementById("image").onchange = function(){
+document.getElementById("image").onchange = function () {
   const file = this.files[0];
   const reader = new FileReader();
-  reader.onload = function(){
+  reader.onload = function () {
     socket.emit("send_image", {
       sender: user,
       filename: file.name,
@@ -66,11 +135,12 @@ document.getElementById("image").onchange = function(){
   reader.readAsArrayBuffer(file);
 };
 
-socket.on("new_message", function(m){
+socket.on("new_message", function (m) {
   const div = document.createElement("div");
-  div.className = "msg " + m.sender;
-  div.innerHTML = `<b>${m.sender}</b> <span class="time">${m.time}</span><br>` +
-    (m.type === "text" ? m.content : `<img src="/${m.content}">`);
+  div.className = "bubble " + (m.sender === user ? "me" : "her");
+  div.innerHTML =
+    (m.type === "text" ? m.content : `<img src="/${m.content}">`) +
+    `<div class="time">${m.time}</div>`;
   document.getElementById("chat").appendChild(div);
   window.scrollTo(0, document.body.scrollHeight);
 });
@@ -78,4 +148,5 @@ socket.on("new_message", function(m){
 
 </body>
 </html>
+
 
