@@ -1,41 +1,101 @@
 from flask import Flask, render_template, request, redirect, session
+from flask_socketio import SocketIO, emit
+import os, json
+from datetime import datetime
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.secret_key = "only-us-secret-key"  # 随便写，但别给别人看
+app.secret_key = "only-us-secret-key"
+socketio = SocketIO(app, cors_allowed_origins="*")
 
-PASSWORD = "20250415"  # ← 改成你们的暗号
+PASSWORD_ME = "20000608"
+PASSWORD_HER = "20001027"
 
-messages = []
+UPLOAD_FOLDER = "static/uploads"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+HISTORY_FILE = "chat_history.json"
+
+
+def load_messages():
+    if os.path.exists(HISTORY_FILE):
+        with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return []
+
+
+def save_messages(msgs):
+    with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+        json.dump(msgs, f, ensure_ascii=False, indent=2)
+
+
+messages = load_messages()
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         pwd = request.form.get("password")
-        if pwd == PASSWORD:
-            session["auth"] = True
+        if pwd == PASSWORD_ME:
+            session["user"] = "你"
+            return redirect("/")
+        elif pwd == PASSWORD_HER:
+            session["user"] = "她"
             return redirect("/")
         else:
-            return render_template("login.html", error="密码不对哦 💔")
+            return render_template("login.html", error="密码不对 💔")
     return render_template("login.html")
 
-@app.route("/", methods=["GET", "POST"])
+
+@app.route("/")
 def chat():
-    if not session.get("auth"):
+    if "user" not in session:
         return redirect("/login")
+    return render_template("chat.html", user=session["user"], messages=messages)
 
-    if request.method == "POST":
-        msg = request.form.get("message")
-        if msg:
-            messages.append(msg)
-        return redirect("/")
 
-    return render_template("chat.html", messages=messages)
+@socketio.on("send_message")
+def handle_message(data):
+    sender = data["sender"]
+    msg_type = data["type"]
+    content = data["content"]
 
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/login")
+    msg = {
+        "sender": sender,
+        "type": msg_type,
+        "content": content,
+        "time": datetime.now().strftime("%H:%M")
+    }
+
+    messages.append(msg)
+    save_messages(messages)
+
+    emit("new_message", msg, broadcast=True)
+
+
+@socketio.on("send_image")
+def handle_image(data):
+    sender = data["sender"]
+    filename = secure_filename(data["filename"])
+    filedata = data["filedata"]
+
+    path = os.path.join(UPLOAD_FOLDER, filename)
+    with open(path, "wb") as f:
+        f.write(filedata)
+
+    msg = {
+        "sender": sender,
+        "type": "image",
+        "content": path,
+        "time": datetime.now().strftime("%H:%M")
+    }
+
+    messages.append(msg)
+    save_messages(messages)
+
+    emit("new_message", msg, broadcast=True)
+
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    socketio.run(app, host="0.0.0.0", port=5000)
 
