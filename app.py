@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, session
 from flask_socketio import SocketIO, emit
 import os, json
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -32,6 +33,10 @@ def save_messages(msgs):
 messages = load_messages()
 
 
+def now_beijing():
+    return datetime.now(ZoneInfo("Asia/Shanghai")).strftime("%Y/%m/%d %H:%M")
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -56,43 +61,33 @@ def chat():
 
 @socketio.on("send_message")
 def handle_message(data):
-    sender = data["sender"]
-    msg_type = data["type"]
-    content = data["content"]
-
     msg = {
-        "sender": sender,
-        "type": msg_type,
-        "content": content,
-        "time": datetime.now().strftime("%H:%M")
+        "sender": data["sender"],
+        "type": "text",
+        "content": data["content"],
+        "time": now_beijing()
     }
-
     messages.append(msg)
     save_messages(messages)
-
     emit("new_message", msg, broadcast=True)
 
 
 @socketio.on("send_image")
 def handle_image(data):
-    sender = data["sender"]
     filename = secure_filename(data["filename"])
-    filedata = data["filedata"]
-
     path = os.path.join(UPLOAD_FOLDER, filename)
+
     with open(path, "wb") as f:
-        f.write(filedata)
+        f.write(data["filedata"])
 
     msg = {
-        "sender": sender,
+        "sender": data["sender"],
         "type": "image",
         "content": path,
-        "time": datetime.now().strftime("%H:%M")
+        "time": now_beijing()
     }
-
     messages.append(msg)
     save_messages(messages)
-
     emit("new_message", msg, broadcast=True)
 
 
