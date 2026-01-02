@@ -9,7 +9,7 @@
 body {
   margin: 0;
   background: #ededed;
-  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .header {
@@ -30,23 +30,22 @@ body {
   padding: 10px 14px;
   margin: 10px 0;
   border-radius: 16px;
-  position: relative;
   word-wrap: break-word;
 }
 
 .me {
-  background: #9eea6a;
+  background: #9eea6a; /* 你：绿色 */
   margin-left: auto;
 }
 
 .her {
-  background: white;
+  background: #ffd6e7; /* 她：粉色 */
   margin-right: auto;
 }
 
 .time {
   font-size: 12px;
-  color: #888;
+  color: #666;
   margin-top: 4px;
 }
 
@@ -63,7 +62,6 @@ img {
   padding: 10px;
   display: flex;
   gap: 6px;
-  box-shadow: 0 -1px 5px rgba(0,0,0,0.1);
 }
 
 input[type="text"] {
@@ -85,7 +83,7 @@ button {
 
 <body>
 
-<div class="header">💚 我们的小聊天</div>
+<div class="header">❤️ 我们的小聊天</div>
 
 <div class="chat" id="chat">
 {% for m in messages %}
@@ -114,7 +112,7 @@ const user = "{{ user }}";
 function sendText() {
   const text = document.getElementById("text").value;
   if (text.trim()) {
-    socket.emit("send_message", {
+    socket.emit("send_text", {
       sender: user,
       content: text
     });
@@ -129,17 +127,19 @@ document.getElementById("image").onchange = function () {
     socket.emit("send_image", {
       sender: user,
       filename: file.name,
-      filedata: new Uint8Array(reader.result)
+      data: reader.result
     });
   };
-  reader.readAsArrayBuffer(file);
+  reader.readAsDataURL(file);
 };
 
 socket.on("new_message", function (m) {
   const div = document.createElement("div");
   div.className = "bubble " + (m.sender === user ? "me" : "her");
   div.innerHTML =
-    (m.type === "text" ? m.content : `<img src="/${m.content}">`) +
+    (m.type === "text"
+      ? m.content
+      : `<img src="/${m.content}">`) +
     `<div class="time">${m.time}</div>`;
   document.getElementById("chat").appendChild(div);
   window.scrollTo(0, document.body.scrollHeight);
@@ -148,5 +148,6 @@ socket.on("new_message", function (m) {
 
 </body>
 </html>
+
 
 
