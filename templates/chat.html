@@ -1,25 +1,35 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="utf-8">
+<title>只属于我们 💗</title>
 <link rel="stylesheet" href="/static/style.css">
 <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
+
 <body>
 
-<div id="chat"></div>
+<div class="chat-wrapper">
+  <div class="chat-header">💬 我们的聊天</div>
 
-<form id="form">
-<input id="msg" autocomplete="off">
-<input type="file" id="img">
-<button>发送</button>
-</form>
+  <div id="chat" class="chat-box"></div>
+
+  <form id="form" class="chat-input">
+    <input id="msg" placeholder="说点什么吧…" autocomplete="off">
+    <label class="img-btn">
+      📷
+      <input type="file" id="img" hidden>
+    </label>
+    <button>发送</button>
+  </form>
+</div>
 
 <script>
 const socket = io();
 const user = "{{ user }}";
 
 socket.on("history", msgs => {
-  document.getElementById("chat").innerHTML = "";
+  chat.innerHTML = "";
   msgs.forEach(addMsg);
 });
 
@@ -28,17 +38,19 @@ socket.on("new_message", addMsg);
 function addMsg(m) {
   const d = document.createElement("div");
   d.className = "bubble " + (m.sender === user ? "me" : "her");
-  d.innerHTML =
-    (m.type === "text"
-      ? m.content
-      : `<img src="/${m.content}">`) +
-    `<div class="time">${m.time}</div>`;
+
+  d.innerHTML = `
+    ${m.type === "text" ? m.content : `<img src="/${m.content}">`}
+    <div class="time">${m.time}</div>
+  `;
+
   chat.appendChild(d);
-  window.scrollTo(0, document.body.scrollHeight);
+  chat.scrollTop = chat.scrollHeight;
 }
 
 form.onsubmit = e => {
   e.preventDefault();
+  if (msg.value.trim() === "") return;
   socket.emit("send_message", {type:"text", content:msg.value});
   msg.value="";
 };
@@ -53,5 +65,6 @@ img.onchange = () => {
 
 </body>
 </html>
+
 
 
