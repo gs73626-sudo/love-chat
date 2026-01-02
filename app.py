@@ -3,7 +3,7 @@ from flask import Flask, render_template, request, redirect, session
 app = Flask(__name__)
 app.secret_key = "only-us-secret-key"  # 随便写，但别给别人看
 
-PASSWORD = "1314"  # ← 改成你们的暗号
+PASSWORD = "20250415"  # ← 改成你们的暗号
 
 messages = []
 
@@ -38,3 +38,4 @@ def logout():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+
