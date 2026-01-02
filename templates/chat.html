@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>只属于我们的对话</title>
+    <style>
+        body {
+            background-color: #fff7f3;
+            font-family: Arial;
+            padding: 40px;
+        }
+        .box {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+        }
+        h2 {
+            text-align: center;
+        }
+        .intro {
+            white-space: pre-line;
+            margin-bottom: 20px;
+        }
+        .msg {
+            margin: 8px 0;
+        }
+    </style>
+</head>
+
+<body>
+<div class="box">
+    <h2>只属于我们的对话</h2>
+
+    <div class="intro">
+宝贝：
+
+对不起。
+今天让你不开心，是我不好。
+
+我不是不在乎你，
+而是有时候太笨，不会好好表达。
+但你对我真的很重要。
+
+这个地方没有别人，
+我只是想安静地听你说话。
+
+我爱你。
+    </div>
+
+    {% for m in messages %}
+        <div class="msg">💬 {{ m }}</div>
+    {% endfor %}
+
+    <form method="post">
+        <input name="message" placeholder="你想对我说的话">
+        <button>发送</button>
+    </form>
+</div>
+</body>
+</html>
