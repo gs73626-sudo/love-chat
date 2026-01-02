@@ -1,20 +1,37 @@
 body {
+  margin: 0;
   background: #f2f2f2;
-  font-family: -apple-system, BlinkMacSystemFont;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue";
 }
 
-#chat {
-  max-width: 700px;
+.chat-wrapper {
+  max-width: 720px;
+  height: 100vh;
   margin: auto;
-  padding-bottom: 80px;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+.chat-header {
+  padding: 15px;
+  background: #ededed;
+  text-align: center;
+  font-weight: bold;
+}
+
+.chat-box {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
 }
 
 .bubble {
-  max-width: 60%;
-  margin: 10px;
+  max-width: 65%;
   padding: 10px 14px;
+  margin: 8px 0;
   border-radius: 16px;
-  position: relative;
+  word-break: break-word;
 }
 
 .me {
@@ -34,17 +51,31 @@ body {
   text-align: right;
 }
 
-img {
+.bubble img {
   max-width: 100%;
   border-radius: 10px;
 }
 
-form {
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  background: white;
-  padding: 10px;
+.chat-input {
   display: flex;
-  gap: 10px;
+  padding: 10px;
+  border-top: 1px solid #ddd;
 }
+
+.chat-input input[type=text] {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.chat-input button {
+  margin-left: 8px;
+}
+
+.img-btn {
+  margin-left: 8px;
+  cursor: pointer;
+}
+
+
