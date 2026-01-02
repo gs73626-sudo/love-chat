@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, session
 from flask_socketio import SocketIO, emit
-import os, json
+import os, json, base64
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from werkzeug.utils import secure_filename
@@ -9,6 +9,7 @@ app = Flask(__name__)
 app.secret_key = "only-us-secret-key"
 socketio = SocketIO(app, cors_allowed_origins="*")
 
+# 密码
 PASSWORD_ME = "20000608"
 PASSWORD_HER = "20001027"
 
@@ -16,6 +17,10 @@ UPLOAD_FOLDER = "static/uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 HISTORY_FILE = "chat_history.json"
+
+
+def now_beijing():
+    return datetime.now(ZoneInfo("Asia/Shanghai")).strftime("%Y/%m/%d %H:%M")
 
 
 def load_messages():
@@ -31,10 +36,6 @@ def save_messages(msgs):
 
 
 messages = load_messages()
-
-
-def now_beijing():
-    return datetime.now(ZoneInfo("Asia/Shanghai")).strftime("%Y/%m/%d %H:%M")
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -59,8 +60,8 @@ def chat():
     return render_template("chat.html", user=session["user"], messages=messages)
 
 
-@socketio.on("send_message")
-def handle_message(data):
+@socketio.on("send_text")
+def handle_text(data):
     msg = {
         "sender": data["sender"],
         "type": "text",
@@ -74,14 +75,18 @@ def handle_message(data):
 
 @socketio.on("send_image")
 def handle_image(data):
+    sender = data["sender"]
     filename = secure_filename(data["filename"])
+    image_base64 = data["data"].split(",")[1]
+
+    image_bytes = base64.b64decode(image_base64)
     path = os.path.join(UPLOAD_FOLDER, filename)
 
     with open(path, "wb") as f:
-        f.write(data["filedata"])
+        f.write(image_bytes)
 
     msg = {
-        "sender": data["sender"],
+        "sender": sender,
         "type": "image",
         "content": path,
         "time": now_beijing()
@@ -93,4 +98,6 @@ def handle_image(data):
 
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=5000)
+
+
 
