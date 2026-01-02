@@ -1,62 +1,57 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>只属于我们的对话</title>
-    <style>
-        body {
-            background-color: #fff7f3;
-            font-family: Arial;
-            padding: 40px;
-        }
-        .box {
-            max-width: 600px;
-            margin: auto;
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-        }
-        h2 {
-            text-align: center;
-        }
-        .intro {
-            white-space: pre-line;
-            margin-bottom: 20px;
-        }
-        .msg {
-            margin: 8px 0;
-        }
-    </style>
+<link rel="stylesheet" href="/static/style.css">
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
-
 <body>
-<div class="box">
-    <h2>只属于我们的对话</h2>
 
-    <div class="intro">
-宝贝：
+<div id="chat"></div>
 
-对不起。
-今天让你不开心，是我不好。
+<form id="form">
+<input id="msg" autocomplete="off">
+<input type="file" id="img">
+<button>发送</button>
+</form>
 
-我不是不在乎你，
-而是有时候太笨，不会好好表达。
-但你对我真的很重要。
+<script>
+const socket = io();
+const user = "{{ user }}";
 
-这个地方没有别人，
-我只是想安静地听你说话。
+socket.on("history", msgs => {
+  document.getElementById("chat").innerHTML = "";
+  msgs.forEach(addMsg);
+});
 
-我爱你。
-    </div>
+socket.on("new_message", addMsg);
 
-    {% for m in messages %}
-        <div class="msg">💬 {{ m }}</div>
-    {% endfor %}
+function addMsg(m) {
+  const d = document.createElement("div");
+  d.className = "bubble " + (m.sender === user ? "me" : "her");
+  d.innerHTML =
+    (m.type === "text"
+      ? m.content
+      : `<img src="/${m.content}">`) +
+    `<div class="time">${m.time}</div>`;
+  chat.appendChild(d);
+  window.scrollTo(0, document.body.scrollHeight);
+}
 
-    <form method="post">
-        <input name="message" placeholder="你想对我说的话">
-        <button>发送</button>
-    </form>
-</div>
+form.onsubmit = e => {
+  e.preventDefault();
+  socket.emit("send_message", {type:"text", content:msg.value});
+  msg.value="";
+};
+
+img.onchange = () => {
+  const f = img.files[0];
+  const r = new FileReader();
+  r.onload = () => socket.emit("send_image",{name:f.name,data:r.result});
+  r.readAsArrayBuffer(f);
+};
+</script>
+
 </body>
 </html>
+
+
