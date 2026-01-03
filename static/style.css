@@ -1,50 +1,91 @@
 body {
-  background: #f2f2f2;
+  margin: 0;
   font-family: -apple-system, BlinkMacSystemFont;
 }
 
-#chat {
-  max-width: 700px;
+.login-bg {
+  background: linear-gradient(#ffd6e7, #ffeef5);
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-box {
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  text-align: center;
+}
+
+.chat-wrapper {
+  max-width: 720px;
   margin: auto;
-  padding-bottom: 80px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(#ffe6f0, #fff);
+}
+
+.chat-header {
+  padding: 15px;
+  text-align: center;
+  font-weight: bold;
+  background: rgba(255,255,255,0.6);
+}
+
+.chat-box {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
 }
 
 .bubble {
-  max-width: 60%;
+  max-width: 65%;
+  padding: 12px;
+  border-radius: 18px;
   margin: 10px;
-  padding: 10px 14px;
-  border-radius: 16px;
-  position: relative;
 }
 
 .me {
-  background: #9dd1ff;
+  background: #d9f2c3;
   margin-left: auto;
 }
 
 .her {
-  background: #ffb6c1;
-  margin-right: auto;
+  background: #fff;
 }
 
 .time {
   font-size: 12px;
-  color: #555;
-  margin-top: 4px;
+  color: #888;
   text-align: right;
+  margin-top: 4px;
 }
 
-img {
+.bubble img {
   max-width: 100%;
-  border-radius: 10px;
+  border-radius: 12px;
 }
 
-form {
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  background: white;
-  padding: 10px;
+.chat-input {
   display: flex;
-  gap: 10px;
+  padding: 10px;
+  background: #fff;
 }
+
+.chat-input input {
+  flex: 1;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+}
+
+.icon-btn {
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+
+
+
