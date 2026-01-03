@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request, redirect, session, send_from_directory
+from flask import Flask, render_template, request, redirect, session
 from flask_socketio import SocketIO, emit
-import json, os
-from datetime import datetime, timedelta, timezone
+import os
+import sqlite3
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.secret_key = "only-us-secret-key"
@@ -12,25 +13,38 @@ PASSWORDS = {
     "20001027": "her"
 }
 
-HISTORY_FILE = "chat_history.json"
 UPLOAD_DIR = "static/uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+# ---------- 时间（北京时间） ----------
 def beijing_time():
     return (datetime.utcnow() + timedelta(hours=8)).strftime("%Y/%m/%d %H:%M")
 
-def load_history():
-    if not os.path.exists(HISTORY_FILE):
-        return []
-    with open(HISTORY_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+# ---------- SQLite 工具 ----------
+def get_db():
+    conn = sqlite3.connect("chat.db", check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    return conn
 
-def save_history(msgs):
-    with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-        json.dump(msgs, f, ensure_ascii=False, indent=2)
+def fetch_messages():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT sender, type, content, time FROM messages ORDER BY id ASC")
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
 
-messages = load_history()
+def save_message(sender, msg_type, content, time):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO messages (sender, type, content, time) VALUES (?, ?, ?, ?)",
+        (sender, msg_type, content, time)
+    )
+    conn.commit()
+    conn.close()
 
+# ---------- 路由 ----------
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -52,41 +66,53 @@ def logout():
     session.clear()
     return redirect("/login")
 
+# ---------- Socket.IO ----------
 @socketio.on("connect")
 def send_history():
-    emit("history", messages)
+    history = fetch_messages()
+    emit("history", history)
 
 @socketio.on("send_message")
 def handle_message(data):
-    msg = {
-        "sender": session.get("user"),
+    sender = session.get("user")
+    time = beijing_time()
+    content = data["content"]
+
+    save_message(sender, "text", content, time)
+
+    emit("new_message", {
+        "sender": sender,
         "type": "text",
-        "content": data["content"],
-        "time": beijing_time()
-    }
-    messages.append(msg)
-    save_history(messages)
-    emit("new_message", msg, broadcast=True)
+        "content": content,
+        "time": time
+    }, broadcast=True)
 
 @socketio.on("send_image")
 def handle_image(data):
-    filename = beijing_time().replace("/", "").replace(":", "").replace(" ", "") + "_" + data["name"]
+    sender = session.get("user")
+    time = beijing_time()
+
+    filename = time.replace("/", "").replace(":", "").replace(" ", "") + "_" + data["name"]
     path = os.path.join(UPLOAD_DIR, filename)
+
     with open(path, "wb") as f:
         f.write(data["data"])
 
-    msg = {
-        "sender": session.get("user"),
-        "type": "image",
-        "content": f"static/uploads/{filename}",
-        "time": beijing_time()
-    }
-    messages.append(msg)
-    save_history(messages)
-    emit("new_message", msg, broadcast=True)
+    img_path = f"static/uploads/{filename}"
+    save_message(sender, "image", img_path, time)
 
+    emit("new_message", {
+        "sender": sender,
+        "type": "image",
+        "content": img_path,
+        "time": time
+    }, broadcast=True)
+
+# ---------- 启动 ----------
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=5000)
+
+
 
 
 
